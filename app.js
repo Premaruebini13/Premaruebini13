@@ -154,6 +154,13 @@ this.scene.background = new THREE.Color(0xffd580); // Light orange background
 			});
 						child.material = mat2;
 						mat1.dispose();
+					} else if (child.name.includes("Frame")) {
+						child.material.color.setHex(0xFFA500); // Orange frame color
+					}
+				}
+			});
+						child.material = mat2;
+						mat1.dispose();
 					}
 				}
 			});
