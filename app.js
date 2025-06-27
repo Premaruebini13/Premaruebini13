@@ -9,8 +9,8 @@ import { CanvasUI } from './libs/CanvasUI.js';
 import { GazeController } from './libs/GazeController.js';
 import { XRControllerModelFactory } from './libs/three/jsm/XRControllerModelFactory.js';
 
-class App {
-	constructor() {
+class App{
+	constructor(){
 		const container = document.createElement('div');
 		document.body.appendChild(container);
 
@@ -25,13 +25,13 @@ class App {
 		this.camera.add(this.dummyCam);
 
 		this.scene = new THREE.Scene();
+this.scene.background = new THREE.Color(0xffd580); // Light orange background
 		this.scene.add(this.dolly);
 
-		// Ambient blue light
 		const ambient = new THREE.HemisphereLight(0x3399FF, 0x000033, 0.8);
 		this.scene.add(ambient);
 
-		// ✨ Directional light for better depth
+		// ✨ Add directional light for depth
 		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 		directionalLight.position.set(5, 10, 7.5);
 		this.scene.add(directionalLight);
@@ -69,7 +69,34 @@ class App {
 			});
 	}
 
-	setEnvironment() {
+  	buildControllers(parent = this.scene) {
+		const controllerModelFactory = new XRControllerModelFactory();
+		const geometry = new THREE.BufferGeometry().setFromPoints([
+			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
+		]);
+
+		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 }); // orange laser
+		const line = new THREE.Line(geometry, lineMaterial);
+		line.scale.z = 0;
+
+		const controllers = [];
+
+		for (let i = 0; i <= 1; i++) {
+			const controller = this.renderer.xr.getController(i);
+			controller.add(line.clone());
+			controller.userData.selectPressed = false;
+			parent.add(controller);
+			controllers.push(controller);
+
+			const grip = this.renderer.xr.getControllerGrip(i);
+			grip.add(controllerModelFactory.createControllerModel(grip));
+			parent.add(grip);
+		}
+
+		return controllers;
+	}
+
+  	setEnvironment() {
 		const loader = new RGBELoader().setDataType(THREE.UnsignedByteType);
 		const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
 		pmremGenerator.compileEquirectangularShader();
@@ -95,11 +122,9 @@ class App {
 		dracoLoader.setDecoderPath('./libs/three/js/draco/');
 		loader.setDRACOLoader(dracoLoader);
 		const self = this;
-
 		loader.load('college.glb', function (gltf) {
 			const college = gltf.scene.children[0];
 			self.scene.add(college);
-
 			college.traverse(function (child) {
 				if (child.isMesh) {
 					if (child.name.indexOf("PROXY") != -1) {
@@ -118,7 +143,6 @@ class App {
 					}
 				}
 			});
-
 			const door1 = college.getObjectByName("LobbyShop_Door__1_");
 			const door2 = college.getObjectByName("LobbyShop_Door__2_");
 			const pos = door1.position.clone().sub(door2.position).multiplyScalar(0.5).add(door2.position);
@@ -126,7 +150,6 @@ class App {
 			obj.name = "LobbyShop";
 			obj.position.copy(pos);
 			college.add(obj);
-
 			self.loadingBar.visible = false;
 			self.setupXR();
 		}, function (xhr) {
@@ -176,29 +199,6 @@ class App {
 		this.ui = new CanvasUI(content, config);
 		this.scene.add(this.ui.mesh);
 		this.renderer.setAnimationLoop(this.render.bind(this));
-	}
-
-	buildControllers(parent = this.scene) {
-		const controllerModelFactory = new XRControllerModelFactory();
-		const geometry = new THREE.BufferGeometry().setFromPoints([
-			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
-		]);
-		const line = new THREE.Line(geometry);
-		line.scale.z = 0;
-		const controllers = [];
-
-		for (let i = 0; i <= 1; i++) {
-			const controller = this.renderer.xr.getController(i);
-			controller.add(line.clone());
-			controller.userData.selectPressed = false;
-			parent.add(controller);
-			controllers.push(controller);
-
-			const grip = this.renderer.xr.getControllerGrip(i);
-			grip.add(controllerModelFactory.createControllerModel(grip));
-			parent.add(grip);
-		}
-		return controllers;
 	}
 
 	moveDolly(dt) {
