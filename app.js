@@ -9,8 +9,8 @@ import { CanvasUI } from './libs/CanvasUI.js';
 import { GazeController } from './libs/GazeController.js';
 import { XRControllerModelFactory } from './libs/three/jsm/XRControllerModelFactory.js';
 
-class App{
-	constructor(){
+class App {
+	constructor() {
 		const container = document.createElement('div');
 		document.body.appendChild(container);
 
@@ -25,13 +25,12 @@ class App{
 		this.camera.add(this.dummyCam);
 
 		this.scene = new THREE.Scene();
-this.scene.background = new THREE.Color(0xffd580); // Light orange background
+		this.scene.background = new THREE.Color(0xffd580);
 		this.scene.add(this.dolly);
 
 		const ambient = new THREE.HemisphereLight(0x3399FF, 0x000033, 0.8);
 		this.scene.add(ambient);
 
-		// ✨ Add directional light for depth
 		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 		directionalLight.position.set(5, 10, 7.5);
 		this.scene.add(directionalLight);
@@ -69,13 +68,13 @@ this.scene.background = new THREE.Color(0xffd580); // Light orange background
 			});
 	}
 
-  	buildControllers(parent = this.scene) {
+	buildControllers(parent = this.scene) {
 		const controllerModelFactory = new XRControllerModelFactory();
 		const geometry = new THREE.BufferGeometry().setFromPoints([
 			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
 		]);
 
-		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 }); // orange laser
+		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 });
 		const line = new THREE.Line(geometry, lineMaterial);
 		line.scale.z = 0;
 
@@ -96,7 +95,7 @@ this.scene.background = new THREE.Color(0xffd580); // Light orange background
 		return controllers;
 	}
 
-  	setEnvironment() {
+	setEnvironment() {
 		const loader = new RGBELoader().setDataType(THREE.UnsignedByteType);
 		const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
 		pmremGenerator.compileEquirectangularShader();
@@ -122,48 +121,32 @@ this.scene.background = new THREE.Color(0xffd580); // Light orange background
 		dracoLoader.setDecoderPath('./libs/three/js/draco/');
 		loader.setDRACOLoader(dracoLoader);
 		const self = this;
+
 		loader.load('college.glb', function (gltf) {
 			const college = gltf.scene.children[0];
 			self.scene.add(college);
+
 			college.traverse(function (child) {
 				if (child.isMesh) {
-					if (child.name.indexOf("PROXY") != -1) {
+					if (child.name.indexOf("PROXY") !== -1) {
 						child.material.visible = false;
 						self.proxy = child;
-					} else if (child.material.name.indexOf('Glass') != -1) {
+					} else if (child.material.name.indexOf('Glass') !== -1) {
 						child.material.color.setHex(0xFF8C00);
 						child.material.opacity = 0.85;
 						child.material.transparent = true;
 						child.material.depthWrite = false;
-					} else if (child.material.name.indexOf("SkyBox") != -1) {
+					} else if (child.material.name.indexOf("SkyBox") !== -1) {
 						const mat1 = child.material;
 						const mat2 = new THREE.MeshBasicMaterial({ map: mat1.map });
 						child.material = mat2;
 						mat1.dispose();
 					} else if (child.name.includes("Frame")) {
-						child.material.color.setHex(0xFFA500); // Orange frame color
+						child.material.color.setHex(0xFFA500);
 					}
 				}
 			});
-						child.material = mat2;
-						mat1.dispose();
-					} else if (child.name.includes("Frame")) {
-						child.material.color.setHex(0xFFA500); // Orange frame color
-					}
-				}
-			});
-						child.material = mat2;
-						mat1.dispose();
-					} else if (child.name.includes("Frame")) {
-						child.material.color.setHex(0xFFA500); // Orange frame color
-					}
-				}
-			});
-						child.material = mat2;
-						mat1.dispose();
-					}
-				}
-			});
+
 			const door1 = college.getObjectByName("LobbyShop_Door__1_");
 			const door2 = college.getObjectByName("LobbyShop_Door__2_");
 			const pos = door1.position.clone().sub(door2.position).multiplyScalar(0.5).add(door2.position);
@@ -171,6 +154,7 @@ this.scene.background = new THREE.Color(0xffd580); // Light orange background
 			obj.name = "LobbyShop";
 			obj.position.copy(pos);
 			college.add(obj);
+
 			self.loadingBar.visible = false;
 			self.setupXR();
 		}, function (xhr) {
