@@ -1,4 +1,4 @@
-import * as THREE from './libs/three/three.module.js';
+import * as THREE from './libs/three/three.module.js'; 
 import { GLTFLoader } from './libs/three/jsm/GLTFLoader.js';
 import { DRACOLoader } from './libs/three/jsm/DRACOLoader.js';
 import { RGBELoader } from './libs/three/jsm/RGBELoader.js';
@@ -9,8 +9,8 @@ import { CanvasUI } from './libs/CanvasUI.js';
 import { GazeController } from './libs/GazeController.js';
 import { XRControllerModelFactory } from './libs/three/jsm/XRControllerModelFactory.js';
 
-class App{
-	constructor(){
+class App {
+	constructor() {
 		const container = document.createElement('div');
 		document.body.appendChild(container);
 
@@ -27,8 +27,14 @@ class App{
 		this.scene = new THREE.Scene();
 		this.scene.add(this.dolly);
 
+		// Ambient blue light
 		const ambient = new THREE.HemisphereLight(0x3399FF, 0x000033, 0.8);
 		this.scene.add(ambient);
+
+		// ✨ Directional light for better depth
+		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+		directionalLight.position.set(5, 10, 7.5);
+		this.scene.add(directionalLight);
 
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -89,9 +95,11 @@ class App{
 		dracoLoader.setDecoderPath('./libs/three/js/draco/');
 		loader.setDRACOLoader(dracoLoader);
 		const self = this;
+
 		loader.load('college.glb', function (gltf) {
 			const college = gltf.scene.children[0];
 			self.scene.add(college);
+
 			college.traverse(function (child) {
 				if (child.isMesh) {
 					if (child.name.indexOf("PROXY") != -1) {
@@ -110,6 +118,7 @@ class App{
 					}
 				}
 			});
+
 			const door1 = college.getObjectByName("LobbyShop_Door__1_");
 			const door2 = college.getObjectByName("LobbyShop_Door__2_");
 			const pos = door1.position.clone().sub(door2.position).multiplyScalar(0.5).add(door2.position);
@@ -117,6 +126,7 @@ class App{
 			obj.name = "LobbyShop";
 			obj.position.copy(pos);
 			college.add(obj);
+
 			self.loadingBar.visible = false;
 			self.setupXR();
 		}, function (xhr) {
@@ -131,6 +141,7 @@ class App{
 		const btn = new VRButton(this.renderer);
 		const self = this;
 		const timeoutId = setTimeout(connectionTimeout, 2000);
+
 		function onSelectStart(event) {
 			this.userData.selectPressed = true;
 		}
@@ -144,12 +155,14 @@ class App{
 			self.useGaze = true;
 			self.gazeController = new GazeController(self.scene, self.dummyCam);
 		}
+
 		this.controllers = this.buildControllers(this.dolly);
 		this.controllers.forEach((controller) => {
 			controller.addEventListener('selectstart', onSelectStart);
 			controller.addEventListener('selectend', onSelectEnd);
 			controller.addEventListener('connected', onConnected);
 		});
+
 		const config = {
 			panelSize: { height: 0.5 },
 			height: 256,
@@ -173,12 +186,14 @@ class App{
 		const line = new THREE.Line(geometry);
 		line.scale.z = 0;
 		const controllers = [];
+
 		for (let i = 0; i <= 1; i++) {
 			const controller = this.renderer.xr.getController(i);
 			controller.add(line.clone());
 			controller.userData.selectPressed = false;
 			parent.add(controller);
 			controllers.push(controller);
+
 			const grip = this.renderer.xr.getControllerGrip(i);
 			grip.add(controllerModelFactory.createControllerModel(grip));
 			parent.add(grip);
