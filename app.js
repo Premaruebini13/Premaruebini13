@@ -178,10 +178,6 @@ class App {
 
 			this.loadingBar.visible = false;
 			this.setupXR();
-		}, xhr => {
-			this.loadingBar.progress = (xhr.loaded / xhr.total);
-		}, error => {
-			console.log('An error happened');
 		});
 	}
 
