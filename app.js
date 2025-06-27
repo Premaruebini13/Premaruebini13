@@ -25,10 +25,10 @@ class App {
 		this.camera.add(this.dummyCam);
 
 		this.scene = new THREE.Scene();
-		this.scene.background = new THREE.Color(0xff0000); // 🔴 Red background
+		this.scene.background = new THREE.Color(0xff0000);
 		this.scene.add(this.dolly);
 
-		const ambient = new THREE.HemisphereLight(0x800080, 0x000033, 1.5); // 🟣 Purple ambient light
+		const ambient = new THREE.HemisphereLight(0x800080, 0x000033, 1.5);
 		this.scene.add(ambient);
 
 		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -58,6 +58,21 @@ class App {
 		this.loadCollege();
 
 		this.immersive = false;
+
+		// 🔊 Setup audio listener and footstep sound
+		this.listener = new THREE.AudioListener();
+		this.camera.add(this.listener);
+
+		this.stepSound = new THREE.Audio(this.listener);
+		const audioLoader = new THREE.AudioLoader();
+		audioLoader.load('./assets/sound/footstep.mp3', (buffer) => {
+			this.stepSound.setBuffer(buffer);
+			this.stepSound.setVolume(0.5);
+		});
+
+		// 🕒 Step timing control
+		this.lastStepTime = 0;
+		this.stepInterval = 400;
 
 		const self = this;
 		fetch('./college.json')
@@ -128,9 +143,8 @@ class App {
 
 			college.traverse(function (child) {
 				if (child.isMesh) {
-					// 🟧 Floor color change
 					if (child.name.toLowerCase().includes("floor")) {
-						child.material.color.setHex(0xFFA500); // Orange
+						child.material.color.setHex(0xFFA500);
 					} else if (child.name.indexOf("PROXY") !== -1) {
 						child.material.visible = false;
 						self.proxy = child;
@@ -152,6 +166,10 @@ class App {
 
 			const door1 = college.getObjectByName("LobbyShop_Door__1_");
 			const door2 = college.getObjectByName("LobbyShop_Door__2_");
+			if (!door1 || !door2) {
+				console.warn("Doors not found.");
+				return;
+			}
 			const pos = door1.position.clone().sub(door2.position).multiplyScalar(0.5).add(door2.position);
 			const obj = new THREE.Object3D();
 			obj.name = "LobbyShop";
@@ -224,18 +242,29 @@ class App {
 		let blocked = false;
 		let intersect = this.raycaster.intersectObject(this.proxy);
 		if (intersect.length > 0 && intersect[0].distance < wallLimit) blocked = true;
+
+		const now = performance.now();
 		if (!blocked) {
 			this.dolly.translateZ(-dt * speed);
+
+			// 🔉 Play footstep sound if cooldown passed
+			if (this.stepSound && !this.stepSound.isPlaying && (now - this.lastStepTime > this.stepInterval)) {
+				this.stepSound.play();
+				this.lastStepTime = now;
+			}
 			pos = this.dolly.getWorldPosition(this.origin);
 		}
+
 		dir.set(-1, 0, 0).applyMatrix4(this.dolly.matrix).normalize();
 		this.raycaster.set(pos, dir);
 		intersect = this.raycaster.intersectObject(this.proxy);
 		if (intersect.length > 0 && intersect[0].distance < wallLimit) this.dolly.translateX(wallLimit - intersect[0].distance);
+
 		dir.set(1, 0, 0).applyMatrix4(this.dolly.matrix).normalize();
 		this.raycaster.set(pos, dir);
 		intersect = this.raycaster.intersectObject(this.proxy);
 		if (intersect.length > 0 && intersect[0].distance < wallLimit) this.dolly.translateX(intersect[0].distance - wallLimit);
+
 		dir.set(0, -1, 0);
 		pos.y += 1.5;
 		this.raycaster.set(pos, dir);
