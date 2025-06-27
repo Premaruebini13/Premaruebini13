@@ -89,30 +89,6 @@ class App {
 			});
 	}
 
-	buildControllers(parent = this.scene) {
-		const controllerModelFactory = new XRControllerModelFactory();
-		const geometry = new THREE.BufferGeometry().setFromPoints([
-			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
-		]);
-		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 });
-		const line = new THREE.Line(geometry, lineMaterial);
-		line.scale.z = 0;
-		const controllers = [];
-
-		for (let i = 0; i <= 1; i++) {
-			const controller = this.renderer.xr.getController(i);
-			controller.add(line.clone());
-			controller.userData.selectPressed = false;
-			parent.add(controller);
-			controllers.push(controller);
-
-			const grip = this.renderer.xr.getControllerGrip(i);
-			grip.add(controllerModelFactory.createControllerModel(grip));
-			parent.add(grip);
-		}
-		return controllers;
-	}
-
 	setEnvironment() {
 		const loader = new RGBELoader().setDataType(THREE.UnsignedByteType);
 		const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
@@ -164,9 +140,9 @@ class App {
 						child.material.color.setHex(0xFFA500);
 					}
 
-					// 🔴 Set stair color to red
 					if (child.name.toLowerCase().includes("stair")) {
-						child.material.color.setHex(0xFF0000);
+						child.material.color.setHex(0xFF0000); // RED
+						console.log('🔴 Stair colored RED:', child.name);
 					}
 				}
 			});
@@ -191,10 +167,9 @@ class App {
 
 	setupXR() {
 		this.renderer.xr.enabled = true;
-		new VRButton(this.renderer);
-
+		document.body.appendChild(VRButton.createButton(this.renderer));
 		this.controllers = this.buildControllers(this.dolly);
-		this.controllers.forEach((controller) => {
+		this.controllers.forEach(controller => {
 			controller.addEventListener('selectstart', () => {
 				controller.userData.selectPressed = true;
 				if (this.stepSound && this.stepSound.buffer && !this.stepSound._unlocked) {
@@ -215,18 +190,38 @@ class App {
 			}
 		});
 
-		this.ui = new CanvasUI(
-			{ name: "name", info: "info" },
-			{
-				panelSize: { height: 0.5 },
-				height: 256,
-				name: { fontSize: 50, height: 70 },
-				info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
-			}
-		);
-
+		this.ui = new CanvasUI({ name: "name", info: "info" }, {
+			panelSize: { height: 0.5 },
+			height: 256,
+			name: { fontSize: 50, height: 70 },
+			info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
+		});
 		this.scene.add(this.ui.mesh);
 		this.renderer.setAnimationLoop(this.render.bind(this));
+	}
+
+	buildControllers(parent) {
+		const controllerModelFactory = new XRControllerModelFactory();
+		const geometry = new THREE.BufferGeometry().setFromPoints([
+			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
+		]);
+		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 });
+		const line = new THREE.Line(geometry, lineMaterial);
+		line.scale.z = 0;
+		const controllers = [];
+
+		for (let i = 0; i <= 1; i++) {
+			const controller = this.renderer.xr.getController(i);
+			controller.add(line.clone());
+			controller.userData.selectPressed = false;
+			parent.add(controller);
+			controllers.push(controller);
+
+			const grip = this.renderer.xr.getControllerGrip(i);
+			grip.add(controllerModelFactory.createControllerModel(grip));
+			parent.add(grip);
+		}
+		return controllers;
 	}
 
 	moveDolly(dt) {
