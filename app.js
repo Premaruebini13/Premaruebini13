@@ -187,9 +187,12 @@ class App {
 
 	setupXR() {
 		this.renderer.xr.enabled = true;
+		new VRButton(this.renderer);
 
-		// ✅ Correct usage of VRButton
-		document.body.appendChild(VRButton.createButton(this.renderer));
+		const timeoutId = setTimeout(() => {
+			this.useGaze = true;
+			this.gazeController = new GazeController(this.scene, this.dummyCam);
+		}, 2000);
 
 		this.controllers = this.buildControllers(this.dolly);
 		this.controllers.forEach((controller) => {
