@@ -1,4 +1,4 @@
-import * as THREE from './libs/three/three.module.js'; 
+import * as THREE from './libs/three/three.module.js';
 import { GLTFLoader } from './libs/three/jsm/GLTFLoader.js';
 import { DRACOLoader } from './libs/three/jsm/DRACOLoader.js';
 import { RGBELoader } from './libs/three/jsm/RGBELoader.js';
@@ -59,7 +59,7 @@ class App {
 
 		this.immersive = false;
 
-		// 🔊 Setup audio listener and footstep sound
+		// 🔊 Audio setup
 		this.listener = new THREE.AudioListener();
 		this.camera.add(this.listener);
 
@@ -70,7 +70,6 @@ class App {
 			this.stepSound.setVolume(0.5);
 		});
 
-		// 🕒 Step timing control
 		this.lastStepTime = 0;
 		this.stepInterval = 400;
 
@@ -193,13 +192,24 @@ class App {
 
 		function onSelectStart(event) {
 			this.userData.selectPressed = true;
+
+			// 🔓 Unlock audio on first user interaction
+			if (self.stepSound && self.stepSound.buffer && !self.stepSound._unlocked) {
+				self.stepSound.play();
+				self.stepSound.stop();
+				self.stepSound._unlocked = true;
+				console.log('🔓 Footstep audio unlocked on first interaction');
+			}
 		}
+
 		function onSelectEnd(event) {
 			this.userData.selectPressed = false;
 		}
+
 		function onConnected(event) {
 			clearTimeout(timeoutId);
 		}
+
 		function connectionTimeout() {
 			self.useGaze = true;
 			self.gazeController = new GazeController(self.scene, self.dummyCam);
@@ -247,7 +257,7 @@ class App {
 		if (!blocked) {
 			this.dolly.translateZ(-dt * speed);
 
-			// 🔉 Play footstep sound if cooldown passed
+			// 🔉 Play footstep sound
 			if (this.stepSound && !this.stepSound.isPlaying && (now - this.lastStepTime > this.stepInterval)) {
 				this.stepSound.play();
 				this.lastStepTime = now;
@@ -274,7 +284,8 @@ class App {
 	}
 
 	get selectPressed() {
-		return (this.controllers && (this.controllers[0].userData.selectPressed || this.controllers[1].userData.selectPressed));
+		return (this.controllers &&
+			(this.controllers[0].userData.selectPressed || this.controllers[1].userData.selectPressed));
 	}
 
 	showInfoboard(name, info, pos) {
@@ -300,11 +311,10 @@ class App {
 			if (this.selectPressed || moveGaze) {
 				this.moveDolly(dt);
 				if (this.boardData) {
-					const scene = this.scene;
 					const dollyPos = this.dolly.getWorldPosition(new THREE.Vector3());
 					let boardFound = false;
 					Object.entries(this.boardData).forEach(([name, info]) => {
-						const obj = scene.getObjectByName(name);
+						const obj = this.scene.getObjectByName(name);
 						if (obj) {
 							const pos = obj.getWorldPosition(new THREE.Vector3());
 							if (dollyPos.distanceTo(pos) < 3) {
