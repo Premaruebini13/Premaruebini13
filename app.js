@@ -59,13 +59,12 @@ class App {
 
 		this.immersive = false;
 
-		// 🎧 Audio setup
 		this.listener = new THREE.AudioListener();
 		this.camera.add(this.listener);
 
 		this.stepSound = new THREE.Audio(this.listener);
 		this.ambientSound = new THREE.Audio(this.listener);
-		this.ambientReady = false; // ✅ NEW
+		this.ambientReady = false;
 
 		const audioLoader = new THREE.AudioLoader();
 		audioLoader.load('./assets/sound/footstep.mp3', (buffer) => {
@@ -76,7 +75,7 @@ class App {
 			this.ambientSound.setBuffer(buffer);
 			this.ambientSound.setLoop(true);
 			this.ambientSound.setVolume(0.3);
-			this.ambientReady = true; // ✅ NEW
+			this.ambientReady = true;
 		});
 
 		this.lastStepTime = 0;
@@ -164,6 +163,11 @@ class App {
 					} else if (child.name.includes("Frame")) {
 						child.material.color.setHex(0xFFA500);
 					}
+
+					// 🔴 Set stair color to red
+					if (child.name.toLowerCase().includes("stair")) {
+						child.material.color.setHex(0xFF0000);
+					}
 				}
 			});
 
@@ -204,7 +208,6 @@ class App {
 			});
 		});
 
-		// ✅ Play ambient sound on session start
 		this.renderer.xr.addEventListener('sessionstart', () => {
 			if (this.ambientSound && this.ambientReady && !this.ambientSound.isPlaying) {
 				this.ambientSound.play();
