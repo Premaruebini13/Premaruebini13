@@ -65,6 +65,7 @@ class App {
 
 		this.stepSound = new THREE.Audio(this.listener);
 		this.ambientSound = new THREE.Audio(this.listener);
+		this.ambientReady = false; // ✅ NEW
 
 		const audioLoader = new THREE.AudioLoader();
 		audioLoader.load('./assets/sound/footstep.mp3', (buffer) => {
@@ -75,6 +76,7 @@ class App {
 			this.ambientSound.setBuffer(buffer);
 			this.ambientSound.setLoop(true);
 			this.ambientSound.setVolume(0.3);
+			this.ambientReady = true; // ✅ NEW
 		});
 
 		this.lastStepTime = 0;
@@ -204,7 +206,7 @@ class App {
 
 		// ✅ Play ambient sound on session start
 		this.renderer.xr.addEventListener('sessionstart', () => {
-			if (this.ambientSound && this.ambientSound.buffer && !this.ambientSound.isPlaying) {
+			if (this.ambientSound && this.ambientReady && !this.ambientSound.isPlaying) {
 				this.ambientSound.play();
 				console.log('🎵 Ambient sound started on XR session start');
 			}
