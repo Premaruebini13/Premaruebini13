@@ -71,7 +71,7 @@ class App {
 			this.stepSound.setBuffer(buffer);
 			this.stepSound.setVolume(0.5);
 		});
-		audioLoader.load('./assets/sound/ambient.mp3', (buffer) => {
+		audioLoader.load('./assets/sound/aimbient.mp3', (buffer) => {
 			this.ambientSound.setBuffer(buffer);
 			this.ambientSound.setLoop(true);
 			this.ambientSound.setVolume(0.3);
