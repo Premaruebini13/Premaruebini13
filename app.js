@@ -27,9 +27,8 @@ class App {
 		this.scene = new THREE.Scene();
 		this.scene.background = new THREE.Color(0xffd580);
 		this.scene.add(this.dolly);
-
-		const ambient = new THREE.HemisphereLight(0x3399FF, 0x000033, 0.8);
-		this.scene.add(ambient);
+const ambient = new THREE.HemisphereLight(0x800080, 0x000033, 1.5);
+this.scene.add(ambient);
 
 		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 		directionalLight.position.set(5, 10, 7.5);
