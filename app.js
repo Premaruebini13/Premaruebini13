@@ -25,10 +25,11 @@ class App {
 		this.camera.add(this.dummyCam);
 
 		this.scene = new THREE.Scene();
-		this.scene.background = new THREE.Color(0xffd580);
+		this.scene.background = new THREE.Color(0xff0000); // 🔴 Red background
 		this.scene.add(this.dolly);
-const ambient = new THREE.HemisphereLight(0x800080, 0x000033, 1.5);
-this.scene.add(ambient);
+
+		const ambient = new THREE.HemisphereLight(0x800080, 0x000033, 1.5); // Purple sky, high intensity
+		this.scene.add(ambient);
 
 		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 		directionalLight.position.set(5, 10, 7.5);
