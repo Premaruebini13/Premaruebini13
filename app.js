@@ -59,12 +59,13 @@ class App {
 
 		this.immersive = false;
 
+		// 🎧 Audio setup
 		this.listener = new THREE.AudioListener();
 		this.camera.add(this.listener);
 
 		this.stepSound = new THREE.Audio(this.listener);
 		this.ambientSound = new THREE.Audio(this.listener);
-		this.ambientReady = false;
+		this.ambientReady = false; // ✅ NEW
 
 		const audioLoader = new THREE.AudioLoader();
 		audioLoader.load('./assets/sound/footstep.mp3', (buffer) => {
@@ -75,7 +76,7 @@ class App {
 			this.ambientSound.setBuffer(buffer);
 			this.ambientSound.setLoop(true);
 			this.ambientSound.setVolume(0.3);
-			this.ambientReady = true;
+			this.ambientReady = true; // ✅ NEW
 		});
 
 		this.lastStepTime = 0;
@@ -87,6 +88,30 @@ class App {
 				this.boardShown = '';
 				this.boardData = obj;
 			});
+	}
+
+	buildControllers(parent = this.scene) {
+		const controllerModelFactory = new XRControllerModelFactory();
+		const geometry = new THREE.BufferGeometry().setFromPoints([
+			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
+		]);
+		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 });
+		const line = new THREE.Line(geometry, lineMaterial);
+		line.scale.z = 0;
+		const controllers = [];
+
+		for (let i = 0; i <= 1; i++) {
+			const controller = this.renderer.xr.getController(i);
+			controller.add(line.clone());
+			controller.userData.selectPressed = false;
+			parent.add(controller);
+			controllers.push(controller);
+
+			const grip = this.renderer.xr.getControllerGrip(i);
+			grip.add(controllerModelFactory.createControllerModel(grip));
+			parent.add(grip);
+		}
+		return controllers;
 	}
 
 	setEnvironment() {
@@ -139,11 +164,6 @@ class App {
 					} else if (child.name.includes("Frame")) {
 						child.material.color.setHex(0xFFA500);
 					}
-
-					if (child.name.toLowerCase().includes("stair")) {
-						child.material.color.setHex(0xFF0000); // RED
-						console.log('🔴 Stair colored RED:', child.name);
-					}
 				}
 			});
 
@@ -167,9 +187,10 @@ class App {
 
 	setupXR() {
 		this.renderer.xr.enabled = true;
-		document.body.appendChild(VRButton.createButton(this.renderer));
+		new VRButton(this.renderer);
+
 		this.controllers = this.buildControllers(this.dolly);
-		this.controllers.forEach(controller => {
+		this.controllers.forEach((controller) => {
 			controller.addEventListener('selectstart', () => {
 				controller.userData.selectPressed = true;
 				if (this.stepSound && this.stepSound.buffer && !this.stepSound._unlocked) {
@@ -183,6 +204,7 @@ class App {
 			});
 		});
 
+		// ✅ Play ambient sound on session start
 		this.renderer.xr.addEventListener('sessionstart', () => {
 			if (this.ambientSound && this.ambientReady && !this.ambientSound.isPlaying) {
 				this.ambientSound.play();
@@ -190,38 +212,18 @@ class App {
 			}
 		});
 
-		this.ui = new CanvasUI({ name: "name", info: "info" }, {
-			panelSize: { height: 0.5 },
-			height: 256,
-			name: { fontSize: 50, height: 70 },
-			info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
-		});
+		this.ui = new CanvasUI(
+			{ name: "name", info: "info" },
+			{
+				panelSize: { height: 0.5 },
+				height: 256,
+				name: { fontSize: 50, height: 70 },
+				info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
+			}
+		);
+
 		this.scene.add(this.ui.mesh);
 		this.renderer.setAnimationLoop(this.render.bind(this));
-	}
-
-	buildControllers(parent) {
-		const controllerModelFactory = new XRControllerModelFactory();
-		const geometry = new THREE.BufferGeometry().setFromPoints([
-			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
-		]);
-		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 });
-		const line = new THREE.Line(geometry, lineMaterial);
-		line.scale.z = 0;
-		const controllers = [];
-
-		for (let i = 0; i <= 1; i++) {
-			const controller = this.renderer.xr.getController(i);
-			controller.add(line.clone());
-			controller.userData.selectPressed = false;
-			parent.add(controller);
-			controllers.push(controller);
-
-			const grip = this.renderer.xr.getControllerGrip(i);
-			grip.add(controllerModelFactory.createControllerModel(grip));
-			parent.add(grip);
-		}
-		return controllers;
 	}
 
 	moveDolly(dt) {
