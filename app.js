@@ -191,38 +191,23 @@ class App {
 		}, 2000);
 
 		this.controllers = this.buildControllers(this.dolly);
-		this.controllers.forEach((controller) => {
-			controller.addEventListener('selectstart', () => {
-				controller.userData.selectPressed = true;
-				if (this.stepSound && this.stepSound.buffer && !this.stepSound._unlocked) {
-					this.stepSound.play();
-					this.stepSound.stop();
-					this.stepSound._unlocked = true;
-				}
-			});
-			controller.addEventListener('selectend', () => {
-				controller.userData.selectPressed = false;
-			});
+
+		this.controllers.forEach(controller => {
+			controller.addEventListener('selectstart', () => controller.userData.selectPressed = true);
+			controller.addEventListener('selectend', () => controller.userData.selectPressed = false);
+			controller.addEventListener('connected', () => clearTimeout(timeoutId));
 		});
 
-		this.renderer.xr.addEventListener('sessionstart', () => {
-			if (this.ambientSound && this.ambientReady && !this.ambientSound.isPlaying) {
-				this.ambientSound.play();
-				console.log('🎵 Ambient sound started on XR session start');
-			}
-		});
-
-		this.ui = new CanvasUI(
-			{ name: "name", info: "info" },
-			{
-				panelSize: { height: 0.5 },
-				height: 256,
-				name: { fontSize: 50, height: 70 },
-				info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
-			}
-		);
-
+		const config = {
+			panelSize: { height: 0.5 },
+			height: 256,
+			name: { fontSize: 50, height: 70 },
+			info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
+		};
+		const content = { name: "name", info: "info" };
+		this.ui = new CanvasUI(content, config);
 		this.scene.add(this.ui.mesh);
+
 		this.renderer.setAnimationLoop(this.render.bind(this));
 	}
 
