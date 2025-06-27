@@ -80,12 +80,11 @@ class App {
 		this.lastStepTime = 0;
 		this.stepInterval = 400;
 
-		const self = this;
 		fetch('./college.json')
 			.then(response => response.json())
 			.then(obj => {
-				self.boardShown = '';
-				self.boardData = obj;
+				this.boardShown = '';
+				this.boardData = obj;
 			});
 	}
 
@@ -138,19 +137,18 @@ class App {
 		const dracoLoader = new DRACOLoader();
 		dracoLoader.setDecoderPath('./libs/three/js/draco/');
 		loader.setDRACOLoader(dracoLoader);
-		const self = this;
 
-		loader.load('college.glb', function (gltf) {
+		loader.load('college.glb', (gltf) => {
 			const college = gltf.scene.children[0];
-			self.scene.add(college);
+			this.scene.add(college);
 
-			college.traverse(function (child) {
+			college.traverse((child) => {
 				if (child.isMesh) {
 					if (child.name.toLowerCase().includes("floor")) {
 						child.material.color.setHex(0xFFA500);
 					} else if (child.name.indexOf("PROXY") !== -1) {
 						child.material.visible = false;
-						self.proxy = child;
+						this.proxy = child;
 					} else if (child.material.name.indexOf('Glass') !== -1) {
 						child.material.color.setHex(0xFF8C00);
 						child.material.opacity = 0.85;
@@ -176,10 +174,10 @@ class App {
 			obj.position.copy(pos);
 			college.add(obj);
 
-			self.loadingBar.visible = false;
-			self.setupXR();
+			this.loadingBar.visible = false;
+			this.setupXR();
 		}, xhr => {
-			self.loadingBar.progress = (xhr.loaded / xhr.total);
+			this.loadingBar.progress = (xhr.loaded / xhr.total);
 		}, error => {
 			console.log('An error happened');
 		});
@@ -187,66 +185,59 @@ class App {
 
 	setupXR() {
 		this.renderer.xr.enabled = true;
-		const btn = new VRButton(this.renderer);
-		const self = this;
-		const timeoutId = setTimeout(connectionTimeout, 2000);
-
-		function onSelectStart(event) {
-			this.userData.selectPressed = true;
-
-			if (self.stepSound && self.stepSound.buffer && !self.stepSound._unlocked) {
-				self.stepSound.play();
-				self.stepSound.stop();
-				self.stepSound._unlocked = true;
-			}
-			if (self.ambientSound && self.ambientSound.buffer && !self.ambientSound.isPlaying) {
-				self.ambientSound.play();
-			}
-		}
-		function onSelectEnd(event) {
-			this.userData.selectPressed = false;
-		}
-		function onConnected(event) {
-			clearTimeout(timeoutId);
-		}
-		function connectionTimeout() {
-			self.useGaze = true;
-			self.gazeController = new GazeController(self.scene, self.dummyCam);
-		}
+		new VRButton(this.renderer);
 
 		this.controllers = this.buildControllers(this.dolly);
 		this.controllers.forEach((controller) => {
-			controller.addEventListener('selectstart', onSelectStart);
-			controller.addEventListener('selectend', onSelectEnd);
-			controller.addEventListener('connected', onConnected);
+			controller.addEventListener('selectstart', () => {
+				controller.userData.selectPressed = true;
+				if (this.stepSound && this.stepSound.buffer && !this.stepSound._unlocked) {
+					this.stepSound.play();
+					this.stepSound.stop();
+					this.stepSound._unlocked = true;
+				}
+			});
+			controller.addEventListener('selectend', () => {
+				controller.userData.selectPressed = false;
+			});
 		});
 
-		const config = {
-			panelSize: { height: 0.5 },
-			height: 256,
-			name: { fontSize: 50, height: 70 },
-			info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
-		};
-		const content = {
-			name: "name",
-			info: "info"
-		};
-		this.ui = new CanvasUI(content, config);
+		// ✅ Play ambient sound on session start
+		this.renderer.xr.addEventListener('sessionstart', () => {
+			if (this.ambientSound && this.ambientSound.buffer && !this.ambientSound.isPlaying) {
+				this.ambientSound.play();
+				console.log('🎵 Ambient sound started on XR session start');
+			}
+		});
+
+		this.ui = new CanvasUI(
+			{ name: "name", info: "info" },
+			{
+				panelSize: { height: 0.5 },
+				height: 256,
+				name: { fontSize: 50, height: 70 },
+				info: { position: { top: 70, backgroundColor: "#ccc", fontColor: "#000" } }
+			}
+		);
+
 		this.scene.add(this.ui.mesh);
 		this.renderer.setAnimationLoop(this.render.bind(this));
 	}
 
 	moveDolly(dt) {
-		if (this.proxy === undefined) return;
+		if (!this.proxy) return;
 		const wallLimit = 1.3;
 		const speed = 2;
+
 		let pos = this.dolly.position.clone();
 		pos.y += 1;
+
 		let dir = new THREE.Vector3();
 		const quaternion = this.dolly.quaternion.clone();
 		this.dolly.quaternion.copy(this.dummyCam.getWorldQuaternion(this.workingQuaternion));
 		this.dolly.getWorldDirection(dir);
 		dir.negate();
+
 		this.raycaster.set(pos, dir);
 		let blocked = false;
 		let intersect = this.raycaster.intersectObject(this.proxy);
@@ -262,26 +253,26 @@ class App {
 			pos = this.dolly.getWorldPosition(this.origin);
 		}
 
-		dir.set(-1, 0, 0).applyMatrix4(this.dolly.matrix).normalize();
-		this.raycaster.set(pos, dir);
-		intersect = this.raycaster.intersectObject(this.proxy);
-		if (intersect.length > 0 && intersect[0].distance < wallLimit) this.dolly.translateX(wallLimit - intersect[0].distance);
-
-		dir.set(1, 0, 0).applyMatrix4(this.dolly.matrix).normalize();
-		this.raycaster.set(pos, dir);
-		intersect = this.raycaster.intersectObject(this.proxy);
-		if (intersect.length > 0 && intersect[0].distance < wallLimit) this.dolly.translateX(intersect[0].distance - wallLimit);
+		["x", "-x"].forEach((axis) => {
+			dir.set(axis === "x" ? 1 : -1, 0, 0).applyMatrix4(this.dolly.matrix).normalize();
+			this.raycaster.set(pos, dir);
+			intersect = this.raycaster.intersectObject(this.proxy);
+			if (intersect.length > 0 && intersect[0].distance < wallLimit) {
+				this.dolly.translateX(axis === "x" ? intersect[0].distance - wallLimit : wallLimit - intersect[0].distance);
+			}
+		});
 
 		dir.set(0, -1, 0);
 		pos.y += 1.5;
 		this.raycaster.set(pos, dir);
 		intersect = this.raycaster.intersectObject(this.proxy);
 		if (intersect.length > 0) this.dolly.position.copy(intersect[0].point);
+
 		this.dolly.quaternion.copy(quaternion);
 	}
 
 	get selectPressed() {
-		return (this.controllers && (this.controllers[0].userData.selectPressed || this.controllers[1].userData.selectPressed));
+		return this.controllers && (this.controllers[0].userData.selectPressed || this.controllers[1].userData.selectPressed);
 	}
 
 	showInfoboard(name, info, pos) {
@@ -298,6 +289,7 @@ class App {
 
 	render(timestamp, frame) {
 		const dt = this.clock.getDelta();
+
 		if (this.renderer.xr.isPresenting) {
 			let moveGaze = false;
 			if (this.useGaze && this.gazeController) {
@@ -326,14 +318,15 @@ class App {
 				}
 			}
 		}
+
 		if (this.immersive !== this.renderer.xr.isPresenting) {
 			this.resize();
 			this.immersive = this.renderer.xr.isPresenting;
 		}
+
 		this.stats.update();
 		this.renderer.render(this.scene, this.camera);
 	}
 }
 
 export { App };
-
