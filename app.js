@@ -28,7 +28,7 @@ class App {
 		this.scene.background = new THREE.Color(0xff0000); // 🔴 Red background
 		this.scene.add(this.dolly);
 
-		const ambient = new THREE.HemisphereLight(0x800080, 0x000033, 1.5); // Purple sky, high intensity
+		const ambient = new THREE.HemisphereLight(0x800080, 0x000033, 1.5); // 🟣 Purple ambient light
 		this.scene.add(ambient);
 
 		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -128,7 +128,10 @@ class App {
 
 			college.traverse(function (child) {
 				if (child.isMesh) {
-					if (child.name.indexOf("PROXY") !== -1) {
+					// 🟧 Floor color change
+					if (child.name.toLowerCase().includes("floor")) {
+						child.material.color.setHex(0xFFA500); // Orange
+					} else if (child.name.indexOf("PROXY") !== -1) {
 						child.material.visible = false;
 						self.proxy = child;
 					} else if (child.material.name.indexOf('Glass') !== -1) {
