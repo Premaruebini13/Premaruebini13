@@ -59,15 +59,22 @@ class App {
 
 		this.immersive = false;
 
-		// 🔊 Audio setup
+		// 🎧 Audio setup
 		this.listener = new THREE.AudioListener();
 		this.camera.add(this.listener);
 
 		this.stepSound = new THREE.Audio(this.listener);
+		this.ambientSound = new THREE.Audio(this.listener);
+
 		const audioLoader = new THREE.AudioLoader();
 		audioLoader.load('./assets/sound/footstep.mp3', (buffer) => {
 			this.stepSound.setBuffer(buffer);
 			this.stepSound.setVolume(0.5);
+		});
+		audioLoader.load('./assets/sound/ambient.mp3', (buffer) => {
+			this.ambientSound.setBuffer(buffer);
+			this.ambientSound.setLoop(true);
+			this.ambientSound.setVolume(0.3);
 		});
 
 		this.lastStepTime = 0;
@@ -87,11 +94,9 @@ class App {
 		const geometry = new THREE.BufferGeometry().setFromPoints([
 			new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)
 		]);
-
 		const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFA500 });
 		const line = new THREE.Line(geometry, lineMaterial);
 		line.scale.z = 0;
-
 		const controllers = [];
 
 		for (let i = 0; i <= 1; i++) {
@@ -105,7 +110,6 @@ class App {
 			grip.add(controllerModelFactory.createControllerModel(grip));
 			parent.add(grip);
 		}
-
 		return controllers;
 	}
 
@@ -165,10 +169,7 @@ class App {
 
 			const door1 = college.getObjectByName("LobbyShop_Door__1_");
 			const door2 = college.getObjectByName("LobbyShop_Door__2_");
-			if (!door1 || !door2) {
-				console.warn("Doors not found.");
-				return;
-			}
+			if (!door1 || !door2) return;
 			const pos = door1.position.clone().sub(door2.position).multiplyScalar(0.5).add(door2.position);
 			const obj = new THREE.Object3D();
 			obj.name = "LobbyShop";
@@ -177,9 +178,9 @@ class App {
 
 			self.loadingBar.visible = false;
 			self.setupXR();
-		}, function (xhr) {
+		}, xhr => {
 			self.loadingBar.progress = (xhr.loaded / xhr.total);
-		}, function (error) {
+		}, error => {
 			console.log('An error happened');
 		});
 	}
@@ -193,23 +194,21 @@ class App {
 		function onSelectStart(event) {
 			this.userData.selectPressed = true;
 
-			// 🔓 Unlock audio on first user interaction
 			if (self.stepSound && self.stepSound.buffer && !self.stepSound._unlocked) {
 				self.stepSound.play();
 				self.stepSound.stop();
 				self.stepSound._unlocked = true;
-				console.log('🔓 Footstep audio unlocked on first interaction');
+			}
+			if (self.ambientSound && self.ambientSound.buffer && !self.ambientSound.isPlaying) {
+				self.ambientSound.play();
 			}
 		}
-
 		function onSelectEnd(event) {
 			this.userData.selectPressed = false;
 		}
-
 		function onConnected(event) {
 			clearTimeout(timeoutId);
 		}
-
 		function connectionTimeout() {
 			self.useGaze = true;
 			self.gazeController = new GazeController(self.scene, self.dummyCam);
@@ -256,8 +255,6 @@ class App {
 		const now = performance.now();
 		if (!blocked) {
 			this.dolly.translateZ(-dt * speed);
-
-			// 🔉 Play footstep sound
 			if (this.stepSound && !this.stepSound.isPlaying && (now - this.lastStepTime > this.stepInterval)) {
 				this.stepSound.play();
 				this.lastStepTime = now;
@@ -284,8 +281,7 @@ class App {
 	}
 
 	get selectPressed() {
-		return (this.controllers &&
-			(this.controllers[0].userData.selectPressed || this.controllers[1].userData.selectPressed));
+		return (this.controllers && (this.controllers[0].userData.selectPressed || this.controllers[1].userData.selectPressed));
 	}
 
 	showInfoboard(name, info, pos) {
@@ -340,3 +336,4 @@ class App {
 }
 
 export { App };
+
