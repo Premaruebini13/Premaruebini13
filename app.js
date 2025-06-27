@@ -4,7 +4,7 @@ import { DRACOLoader } from './libs/three/jsm/DRACOLoader.js';
 import { RGBELoader } from './libs/three/jsm/RGBELoader.js';
 import { Stats } from './libs/stats.module.js';
 import { LoadingBar } from './libs/LoadingBar.js';
-import { VRButton } from './libs/VRButton.js';
+import { VRButton } from './libs/VRButton.js'; // ✅ Make sure this file contains createButton()
 import { CanvasUI } from './libs/CanvasUI.js';
 import { GazeController } from './libs/GazeController.js';
 import { XRControllerModelFactory } from './libs/three/jsm/XRControllerModelFactory.js';
@@ -65,7 +65,7 @@ class App {
 
 		this.stepSound = new THREE.Audio(this.listener);
 		this.ambientSound = new THREE.Audio(this.listener);
-		this.ambientReady = false; // ✅ NEW
+		this.ambientReady = false;
 
 		const audioLoader = new THREE.AudioLoader();
 		audioLoader.load('./assets/sound/footstep.mp3', (buffer) => {
@@ -76,7 +76,7 @@ class App {
 			this.ambientSound.setBuffer(buffer);
 			this.ambientSound.setLoop(true);
 			this.ambientSound.setVolume(0.3);
-			this.ambientReady = true; // ✅ NEW
+			this.ambientReady = true;
 		});
 
 		this.lastStepTime = 0;
@@ -187,7 +187,9 @@ class App {
 
 	setupXR() {
 		this.renderer.xr.enabled = true;
-		new VRButton(this.renderer);
+
+		// ✅ Correct usage of VRButton
+		document.body.appendChild(VRButton.createButton(this.renderer));
 
 		this.controllers = this.buildControllers(this.dolly);
 		this.controllers.forEach((controller) => {
@@ -204,7 +206,6 @@ class App {
 			});
 		});
 
-		// ✅ Play ambient sound on session start
 		this.renderer.xr.addEventListener('sessionstart', () => {
 			if (this.ambientSound && this.ambientReady && !this.ambientSound.isPlaying) {
 				this.ambientSound.play();
