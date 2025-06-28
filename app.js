@@ -59,7 +59,6 @@ class App {
 
 		this.immersive = false;
 
-		// 🎧 Audio setup
 		this.listener = new THREE.AudioListener();
 		this.camera.add(this.listener);
 
@@ -148,6 +147,8 @@ class App {
 				if (child.isMesh) {
 					if (child.name.toLowerCase().includes("floor")) {
 						child.material.color.setHex(0xFFA500);
+					} else if (child.name.toLowerCase().includes("stair")) {
+						child.material.color.set(0x00ff00); // Green stairs
 					} else if (child.name.indexOf("PROXY") !== -1) {
 						child.material.visible = false;
 						this.proxy = child;
@@ -180,6 +181,8 @@ class App {
 			this.setupXR();
 		});
 	}
+
+
 
 	setupXR() {
 		this.renderer.xr.enabled = true;
