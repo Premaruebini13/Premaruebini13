@@ -133,7 +133,7 @@ class App {
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
-	loadCollege() {
+loadCollege() {
 		const loader = new GLTFLoader().setPath(this.assetsPath);
 		const dracoLoader = new DRACOLoader();
 		dracoLoader.setDecoderPath('./libs/three/js/draco/');
@@ -145,25 +145,26 @@ class App {
 
 			college.traverse((child) => {
 				if (child.isMesh) {
-					if (child.name.toLowerCase().includes("floor")) {
-						child.material.color.setHex(0xFFA500);
-					} else if (child.name.toLowerCase().includes("stair")) {
-						child.material.color.set(0x00ff00); // Green stairs
-					} else if (child.name.indexOf("PROXY") !== -1) {
+					if (child.name.includes("Wall") || child.material.name.includes("Wall")) {
+						child.material = new THREE.MeshStandardMaterial({ color: 0xadd8e6 });
+					}
+					if (child.name.includes("Floor") || child.material.name.includes("Floor")) {
+						child.material = new THREE.MeshStandardMaterial({ color: 0x000000 });
+					}
+					if (child.name.includes("Stair") || child.material.name.includes("Stair")) {
+						child.material = new THREE.MeshStandardMaterial({ color: 0xcd853f });
+					}
+					if (child.name.indexOf("PROXY") !== -1) {
 						child.material.visible = false;
 						this.proxy = child;
 					} else if (child.material.name.indexOf('Glass') !== -1) {
-						child.material.color.setHex(0xFF8C00);
-						child.material.opacity = 0.85;
+						child.material.opacity = 0.2;
 						child.material.transparent = true;
-						child.material.depthWrite = false;
 					} else if (child.material.name.indexOf("SkyBox") !== -1) {
 						const mat1 = child.material;
 						const mat2 = new THREE.MeshBasicMaterial({ map: mat1.map });
 						child.material = mat2;
 						mat1.dispose();
-					} else if (child.name.includes("Frame")) {
-						child.material.color.setHex(0xFFA500);
 					}
 				}
 			});
