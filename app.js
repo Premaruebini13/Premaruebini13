@@ -157,9 +157,13 @@ loadCollege() {
 					if (child.name.indexOf("PROXY") !== -1) {
 						child.material.visible = false;
 						this.proxy = child;
-					} else if (child.material.name.indexOf('Glass') !== -1) {
-						child.material.opacity = 0.5;
-						child.material.transparent = true;
+				} else if (child.material.name.indexOf('Glass') !== -1) {
+                        child.material.color.set(0xffa500); // Set the tinted color (light blue tint)
+                        child.material.opacity = 0.8;       // Adjust opacity for more transparency
+                        child.material.transparent = true;  // Enable transparency
+                        child.material.metalness = 0.1;     // Optional: gives a glassy shine
+                        child.material.roughness = 0.1;     // Optional: makes the glass surface smoother
+                    }
 					} else if (child.material.name.indexOf("SkyBox") !== -1) {
 						const mat1 = child.material;
 						const mat2 = new THREE.MeshBasicMaterial({ map: mat1.map });
