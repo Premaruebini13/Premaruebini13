@@ -155,8 +155,8 @@ loadCollege() {
                     child.material = new THREE.MeshStandardMaterial({ color: 0x000000 });
                 }
 
-                if (meshName.includes("Stair") || matName.includes("Stair")) {
-                    child.material = new THREE.MeshStandardMaterial({ color: 0xcd853f });
+               if (meshName.includes("Stair") || matName.includes("Stair")) {
+                    child.material = new THREE.MeshStandardMaterial({ color: 0x228B22 }); // Forest green
                 }
 
                 if (meshName.includes("PROXY")) {
